@@ -1,1 +1,27 @@
-# Como se usa?
+# Propuesta de Proyecto: Rendimiento en Powerlifting
+
+## Contexto del problema
+
+El powerlifting es un deporte de fuerza en el que los atletas compiten principalmente en tres movimientos: sentadilla, press banca y peso muerto. El rendimiento puede medirse de distintas formas: por kilogramos levantados en cada ejercicio, por el total levantado o por puntajes ajustados por peso corporal, como DOTS.
+
+En este proyecsto se busca estudiar el rendimiento de atletas de powerlifting usando datos reales de OpenPowerlifting. NOsotros buscamos analizar como las variables como sexo, edad, peso corporal, categoria de peso, tipo de equipamiento y region se relacionan con el rendimiento deportivo.
+
+La base de datos contiene registros de competencias de powerlifting, incluyendo informacion del atleta, caracteristicas de la competencia, levantamientos realizados y puntajes ajustados.
+
+El analisis de estos datos permite estudiar patrones de rendimiento deportivo en competencias reales, considerando diferencias fisicas, tecnicas y competitivas entre atletas. Ademas, permite evaluar sii variables como edad, peso corporal, sexo y equipamiento se asocian con mejores resultados deportivos.
+
+## Procedencia de los datos
+
+Los datos provienen de OpenPowerlifting, una base de datos abierta que recopila resultados de competencias de powerlifting a nivel internacional. La base contiene informacion sobre atletas, competencias, tipo de evento, equipamiento utilizado, peso corporal, levantamientos registrados y puntajes de rendimiento ajustados como DOTS.
+
+La base original utilizada contiene 3.920.662 registros y 42 variables. Para este proyecto se seleccionaron variables relacionadas con caracteristicas del atleta, tipo de competencia, levantamientos principales, puntajes de rendimiento e informacion geografica.
+
+## Limpiieza de datos
+
+Para preparar la base de datos, primero se seleccionaron las variables relevantes para responder las preguntas de investigacion. Luego, se eliminaron observaciones con datos faltantes en variables centrales para el analisis: sexo, evento, equipamiento, edad, peso corporal, mejor peso muerto, total levantado, puntaje DOTS, pais del atleta y fecha de competencia.
+
+No se eliminaron observaciones por valores faltantes en tondaas las columnas, ya que algunas variables son opcionales o no aplican para todos los registros, como estado, ciudad de competencia, prueba antidopaje o ciertos levantamientos especificos.
+
+## LO QUE YO HARIA AHORA
+
+por esto seleccionamos solo 1 pais (o varios o todos) y dsp trabajamos solo con esa base de datos y asi no ponemos en el informe la limpieza de datos pq segun yo se veria muy mal, yo escogi USA
