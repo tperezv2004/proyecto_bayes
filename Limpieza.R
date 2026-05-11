@@ -194,7 +194,7 @@ hist(
 boxplot(
   Dots ~ Sex,
   data = df_trabajo,
-  main = paste("Puntaje DOTS segun sexo en", pais_trabajo),
+  main = paste("Puntaje DOTS segun sexo en USA"),
   xlab = "Sexo",
   ylab = "Puntaje DOTS"
 )
@@ -205,7 +205,7 @@ boxplot(
 boxplot(
   Dots ~ Equipment,
   data = df_trabajo,
-  main = paste("Puntaje DOTS segun equipamiento en", pais_trabajo),
+  main = paste("Puntaje DOTS segun equipamiento en USA"),
   xlab = "Equipamiento",
   ylab = "Puntaje DOTS"
 )
