@@ -1,26 +1,20 @@
-hi team
+<center> <h3>hi team <h3>
 
-aca van las ideas sueltas
+## IMPORTANTE
 
+- gitignore ingora la base de datos completa pq son muchos datos, y tienen nombre de "completos" 
 
-gitignore ingora la base de datos completa pq son muchos datos, y tienen nombre de "completos" 
-
-tal vez sea mejor usar los datos de latinoamerica o de USA, deberian ser mas
-usamos toda la base de datos?
+- ya esta casi listo todo
 
 
-creo q son como 1600 chilenos, osea filas tal vez un chileno haya particiapdo mas de una vez entonoces el total sean menos chilenos
+### FALTA:
 
-la limpieza de datos la ponemos en el informe? segun yo no solo mensionamos
+1. interpretar algunos graficos y agregar mas informacion a los queue estan  poco comentados
 
-podriamos usar USA son muchos datos pero no se 
+2. ver bien las faltas ortograficas y acentos
 
+3. agregar mas info en la parte datos (tal vez)
 
-la info importante este en extra.R y en informe.Rmd
+4. hacer la parte de preguntas de investigacion 
 
-en extra.R algunos graficos se demoran mucho pq son muchisimos datos podriamos usar una pequeña muestra para graficar pero no se. seria algo asi:
-
-set.seed(123)
-
-df_grafico <- df_trabajo %>%
-  slice_sample(n = min(10000, nrow(df_trabajo)))
+5. discucion preliminar

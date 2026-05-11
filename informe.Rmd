@@ -1,0 +1,634 @@
+---
+title: "Propuesta de Proyecto: Rendimiento en Powerlifting"
+subtitle: "Métodos Bayesianos — Primer Semestre 2026"
+author: "Christian Camilo, Luna Garcés, Tomás Pérez, Tomás Romero, Benjamín Thareau"
+output:
+  pdf_document:
+    toc: false
+    fig_caption: true
+    keep_tex: false
+lang: es
+header-includes:
+  - \usepackage{float}
+  - \usepackage{placeins}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.pos = "H",
+  out.width = "92%",
+  fig.width = 7,
+  fig.height = 4.2
+)
+set.seed(123)
+```
+
+```{r librerias, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(scales)
+```
+
+```{r carga-datos, include=FALSE}
+ruta_datos <- "Data/reporte_USA.csv"
+df_trabajo <- read_csv(ruta_datos, show_col_types = FALSE)
+
+# Preparacion minima para asegurar que las variables usadas existan.
+df_trabajo <- df_trabajo %>%
+  mutate(Date = as.Date(Date))
+
+if (!"Year" %in% names(df_trabajo)) {
+  df_trabajo <- df_trabajo %>% mutate(Year = year(Date))
+}
+
+if (!"TipoEquipo" %in% names(df_trabajo)) {
+  df_trabajo <- df_trabajo %>%
+    mutate(
+      TipoEquipo = case_when(
+        Equipment == "Raw" ~ "Raw",
+        Equipment %in% c("Wraps", "Single-ply", "Multi-ply") ~ "Equipado",
+        TRUE ~ NA_character_
+      )
+    )
+}
+
+# Variable creada para una pregunta posterior del proyecto.
+df_trabajo <- df_trabajo %>%
+  mutate(
+    Elite = if_else(Dots >= 400, "Elite", "No elite"),
+    Sex = factor(Sex, levels = c("F", "M")),
+    Equipment = factor(
+      Equipment,
+      levels = c("Raw", "Wraps", "Single-ply", "Multi-ply")
+    ),
+    TipoEquipo = factor(TipoEquipo, levels = c("Raw", "Equipado")),
+    AgeClass = factor(
+      AgeClass,
+      levels = c(
+        "13-15", "16-17", "18-19", "20-23", "24-34", "35-39",
+        "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74"
+      )
+    )
+  )
+
+n_registros <- nrow(df_trabajo)
+n_variables <- ncol(df_trabajo)
+n_atletas <- n_distinct(df_trabajo$Name)
+anio_min <- min(df_trabajo$Year, na.rm = TRUE)
+anio_max <- max(df_trabajo$Year, na.rm = TRUE)
+
+colores_sexo <- c("F" = "#F8766D", "M" = "#00BFC4")
+colores_equipo <- c(
+  "Raw" = "#7CAE00",
+  "Wraps" = "#C77CFF",
+  "Single-ply" = "#00BFC4",
+  "Multi-ply" = "#F8766D"
+)
+colores_tipo <- c("Raw" = "#7CAE00", "Equipado" = "#F8766D")
+
+# Tema visual comun para mantener el informe limpio y consistente.
+tema_informe <- theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9),
+    legend.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(face = "bold"),
+    plot.margin = margin(8, 8, 8, 8)
+  )
+```
+
+# Introduccion
+
+El powerlifting es un deporte de fuerza en el que los atletas compiten
+principalmente en tres movimientos: sentadilla, press de banca y peso
+muerto. A partir de estos levantamientos se obtiene el total levantado,
+que corresponde a la suma del mejor intento en cada movimiento. Ademas,
+existen puntajes ajustados, como DOTS y Wilks, que permiten comparar el
+rendimiento entre atletas con distinto peso corporal.
+
+Este proyecto busca estudiar el rendimiento de atletas de powerlifting
+de Estados Unidos utilizando datos reales de OpenPowerlifting. Se busca
+analizar como variables como sexo, edad, peso corporal, categoria de
+peso y tipo de equipamiento se relacionan con el rendimiento deportivo.
+El interes principal es entender que patrones se observan en los datos
+y, posteriormente, utilizar modelos bayesianos para responder preguntas
+de investigacion.
+
+# Datos (FALTA ESPECIFICAR MAS)
+
+## Procedencia
+
+Los datos provienen de OpenPowerlifting, una base que recopila
+resultados de competencias de powerlifting a nivel internacional. La
+base original contiene 3.920.662 registros y 42 variables. Para esto sse
+trabajo con una version filtrada de la base, solamente los ateltas de
+Estados Unidos (USA).
+
+Es importante notar que cada fila representa un registro competitivo, no
+necesariamente una persona unica. Por lo tanto, un mismo atleta puede
+aparecer mas de una vez si compitio en distintas fechas o eventos.
+
+## Variables involucradas
+
+```{r tabla-variables}
+tabla_variables <- tribble(
+  ~Variable, ~Descripcion, ~Tipo, ~Unidad,
+  "Name", "Nombre del atleta. Puede repetirse si el atleta compitio mas de una vez.", "Cualitativa", "No aplica",
+  "Sex", "Sexo registrado en la competencia: F o M.", "Cualitativa", "No aplica",
+  "Age", "Edad del atleta al momento de la competencia.", "Cuantitativa", "Años",
+  "AgeClass", "Clase de edad usada en la competencia.", "Cualitativa", "Rango de edad",
+  "BodyweightKg", "Peso corporal registrado del atleta.", "Cuantitativa", "Kg",
+  "WeightClassKg", "Categoria de peso en la que compite el atleta.", "Cualitativa", "Kg",
+  "Equipment", "Tipo de equipamiento permitido: Raw, Wraps, Single-ply o Multi-ply.", "Cualitativa", "No aplica",
+  "TipoEquipo", "Variable creada para agrupar Raw versus Equipado.", "Cualitativa", "No aplica",
+  "Best3SquatKg", "Mejor intento valido de sentadilla dentro de los tres intentos principales.", "Cuantitativa", "Kg",
+  "Best3BenchKg", "Mejor intento valido de press de banca dentro de los tres intentos principales.", "Cuantitativa", "Kg",
+  "Best3DeadliftKg", "Mejor intento valido de peso muerto dentro de los tres intentos principales.", "Cuantitativa", "Kg",
+  "TotalKg", "Suma de los mejores levantamientos validos en sentadilla, banca y peso muerto.", "Cuantitativa", "Kg",
+  "Dots", "Puntaje ajustado por peso corporal usado para comparar rendimiento relativo.", "Cuantitativa", "Puntos",
+  "Wilks", "Otro puntaje ajustado usado historicamente en powerlifting.", "Cuantitativa", "Puntos",
+  "Date", "Fecha de inicio de la competencia.", "Fecha", "Fecha",
+  "Year", "Año de la competencia, creado a partir de Date.", "Cuantitativa discreta", "Año",
+  "Elite", "Variable creada para clasificar atletas con Dots >= 400 como Elite.", "Cualitativa", "No aplica"
+)
+
+kable(tabla_variables, align = "llll")
+```
+
+## Preparacion y limpieza de los datos (VER EN LIMPIEZA.R)
+
+Para construir la base final se seleccionaron variables relacionadas con
+laa identificacion del atleta, caracteristicas fisicas, tipo de
+competencia, equipamiento, intentos de levantamiento, mejores marcas,
+puntajes de rendimiento y fecha. Luego se eliminaron observaciones con
+valores faltantes en las variables centrales del analisis.
+
+Ademas, se aplicaron filtros para trabajar con registros comparables:
+atletas de USA, evento SBD, sexo F o M, edades entre 15 y 70 años, peso
+corporral entre 35 y 200 kg, levantamientos positivos, puntaje DOTS
+mayor a 10 y competencias desde el año 2000 en adelante.
+
+```{r tamano-muestra}
+tabla_muestra <- tibble(
+  Indicador = c(
+    "Registros finales",
+    "Variables finales",
+    "Atletas distintos",
+    "Primer año observado",
+    "Ultimo año observado"
+  ),
+  Valor = c(
+    comma(n_registros),
+    comma(n_variables),
+    comma(n_atletas),
+    anio_min,
+    anio_max
+  )
+)
+
+kable(tabla_muestra, align = "lr")
+```
+
+# Analisis descriptivo
+
+## Medidas de resumen
+
+```{r tabla-resumen}
+vars_resumen <- c(
+  "Age", "BodyweightKg", "Best3SquatKg", "Best3BenchKg",
+  "Best3DeadliftKg", "TotalKg", "Dots", "Wilks"
+)
+
+tabla_resumen <- df_trabajo %>%
+  summarise(
+    across(
+      all_of(vars_resumen),
+      list(
+        Media = ~mean(.x, na.rm = TRUE),
+        Mediana = ~median(.x, na.rm = TRUE),
+        DE = ~sd(.x, na.rm = TRUE),
+        Minimo = ~min(.x, na.rm = TRUE),
+        Maximo = ~max(.x, na.rm = TRUE)
+      ),
+      .names = "{.col}_{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    everything(),
+    names_to = c("Variable", "Medida"),
+    names_pattern = "(.*)_(.*)",
+    values_to = "Valor"
+  ) %>%
+  pivot_wider(names_from = Medida, values_from = Valor) %>%
+  mutate(
+    Variable = recode(
+      Variable,
+      Age = "Edad",
+      BodyweightKg = "Peso corporal",
+      Best3SquatKg = "Mejor sentadilla",
+      Best3BenchKg = "Mejor banca",
+      Best3DeadliftKg = "Mejor peso muerto",
+      TotalKg = "Total levantado",
+      Dots = "DOTS",
+      Wilks = "Wilks"
+    ),
+    across(where(is.numeric), ~round(.x, 2))
+  )
+
+kable(tabla_resumen, align = "lrrrrr")
+```
+
+La tabla muestra que la base contiene atletas con distintos niveles de
+rendimiento, edades y pesos corporales. Esto i,mportante para el
+proyecto, porque permite comparar grupos y estudiar como cambia el
+rendimiento segun las caracteristicas fisicas y competitivas.
+
+## Distribucion de variables principales
+
+```{r histogramas, fig.cap="Distribucion de edad, peso corporal y puntaje DOTS", fig.height=5.1}
+df_trabajo %>%
+  select(
+    "Edad" = Age,
+    "Peso corporal (kg)" = BodyweightKg,
+    "Puntaje DOTS" = Dots
+  ) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Valor") %>%
+  ggplot(aes(x = Valor)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white", alpha = 0.85) +
+  facet_wrap(~Variable, scales = "free", ncol = 1) +
+  labs(
+    title = "Distribucion de variables principales",
+    x = NULL,
+    y = "Frecuencia"
+  ) +
+  tema_informe
+```
+
+La mayor parte de los registros corresponde a atletas adultos jovenes
+(20 - 40 añps). El peso corporal se concentra en rangos intermedios y el
+puntaje DOTS tiene una forma a una distribucion normal (CREO). En la
+cola derecha aparecen atletas con puntajes muy altos
+
+## Rendimiento segun sexo
+
+```{r boxplot-sexo, fig.cap="Distribucion del puntaje DOTS segun sexo", fig.height=4}
+ggplot(df_trabajo, aes(x = Sex, y = Dots, fill = Sex)) +
+  geom_boxplot(alpha = 0.75, outlier.alpha = 0.30, width = 0.55) +
+  scale_fill_manual(values = colores_sexo) +
+  labs(
+    title = "Distribucion del puntaje DOTS segun sexo",
+    x = "Sexo",
+    y = "Puntaje DOTS"
+  ) +
+  tema_informe +
+  theme(legend.position = "none")
+```
+
+En la muestra, los hombres presentan una mediana de DOTS algo mayor que
+las mujeres, el rendimiento tambien puede depender de la edad, el peso
+corporal, la categoria de peso y el tipo de equipamiento.
+
+```{r densidad-sexo, fig.cap="Densidad del puntaje DOTS segun sexo", fig.height=4}
+ggplot(df_trabajo, aes(x = Dots, fill = Sex, color = Sex)) +
+  geom_density(alpha = 0.35, linewidth = 0.7) +
+  scale_fill_manual(values = colores_sexo) +
+  scale_color_manual(values = colores_sexo) +
+  labs(
+    title = "Distribucion del puntaje DOTS por sexo",
+    x = "Puntaje DOTS",
+    y = "Densidad",
+    fill = "Sexo",
+    color = "Sexo"
+  ) +
+  tema_informe
+```
+
+El grafico de densidad confirma que las distribuciones no son identicas.
+La curva de hombres aparece desplazada hacia valores mas altos, aunque
+existe un solapamiento importante entre ambos grupos.
+
+## Rendimiento segun tipo de equipamiento
+
+```{r boxplot-equip, fig.cap="Puntaje DOTS segun tipo de equipamiento", fig.height=4.2}
+ggplot(df_trabajo, aes(x = Equipment, y = Dots, fill = Equipment)) +
+  geom_boxplot(alpha = 0.75, outlier.alpha = 0.28, width = 0.6) +
+  scale_fill_manual(values = colores_equipo, drop = FALSE) +
+  labs(
+    title = "Puntaje DOTS segun tipo de equipamiento",
+    x = "Equipamiento",
+    y = "Puntaje DOTS",
+    fill = "Equipamiento"
+  ) +
+  tema_informe
+```
+
+FALTA
+
+## Peso muerto por equipamiento en clase 90 kg
+
+```{r boxplot-deadlift, fig.cap="Peso muerto en clase 90 kg segun equipamiento", fig.height=4.2}
+df_peso90 <- df_trabajo %>%
+  filter(
+    WeightClassKg == "90",
+    Equipment %in% c("Raw", "Wraps", "Single-ply", "Multi-ply"),
+    Best3DeadliftKg > 0
+  )
+
+ggplot(df_peso90, aes(x = Equipment, y = Best3DeadliftKg, fill = Equipment)) +
+  geom_boxplot(alpha = 0.80, outlier.alpha = 0.40, width = 0.6) +
+  scale_fill_manual(values = colores_equipo, drop = FALSE) +
+  labs(
+    title = "Peso muerto en clase 90 kg: Raw versus equipado",
+    subtitle = "Se fija la clase de peso para hacer una comparacion mas justa.",
+    x = "Equipamiento",
+    y = "Mejor peso muerto (kg)",
+    fill = "Equipamiento"
+  ) +
+  tema_informe
+```
+
+FALTA
+
+## Relacion entre Wilks y total levantado
+
+```{r wilks-total, fig.cap="Relacion entre puntaje Wilks y total levantado segun sexo", fig.height=4.4}
+ggplot(df_trabajo, aes(x = Wilks, y = TotalKg, color = Sex)) +
+  geom_point(alpha = 0.28, size = 1.1) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.9) +
+  scale_color_manual(values = colores_sexo) +
+  labs(
+    title = "A mayor puntaje Wilks, mayor total levantado",
+    subtitle = "La relacion se observa en ambos sexos, pero con niveles distintos de total levantado.",
+    x = "Puntos Wilks",
+    y = "Total levantado (kg)",
+    color = "Sexo"
+  ) +
+  tema_informe
+```
+
+Existe una relacion positiva clara entre Wilks y el total levantado.
+Esto es esperable, porque Wilks resume parte del rendimiento ajustando
+por peso corporal. Ademas, se observa separacion entre hombres y mujeres
+en el total absoluto levantado.
+
+## Promedio de levantamientos segun edad
+
+```{r levantamientos-edad, fig.cap="Promedio de sentadilla, banca y peso muerto segun clase de edad", fig.height=4.5}
+df_trabajo %>%
+  filter(!is.na(AgeClass)) %>%
+  group_by(AgeClass) %>%
+  summarise(
+    Sentadilla = mean(Best3SquatKg, na.rm = TRUE),
+    Banca = mean(Best3BenchKg, na.rm = TRUE),
+    `Peso muerto` = mean(Best3DeadliftKg, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(Sentadilla, Banca, `Peso muerto`),
+    names_to = "Levantamiento",
+    values_to = "Promedio"
+  ) %>%
+  ggplot(aes(x = AgeClass, y = Promedio, color = Levantamiento, group = Levantamiento)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 1.8) +
+  labs(
+    title = "Promedio levantado segun clase de edad",
+    x = "Clase de edad",
+    y = "Peso levantado promedio (kg)",
+    color = "Levantamiento"
+  ) +
+  tema_informe +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+
+El promedio levantado aumenta desde las edades mas jovenes hasta loa 30
+y luego tiende a disminuir en edades mayores. El peso muerto y la
+sentadilla suelen presentar promedios mas altos que la banca. Esto
+ssugiere que la edad no tiene un efecto lineal simple sobre el
+rendimiento.
+
+## Relacion entre edad y DOTS
+
+```{r dispersion-dots, fig.cap="Relacion entre edad y puntaje DOTS segun sexo", fig.height=4.2}
+ggplot(df_trabajo, aes(x = Age, y = Dots, color = Sex)) +
+  geom_point(alpha = 0.16, size = 1.0) +
+  geom_smooth(method = "loess", se = FALSE, linewidth = 1) +
+  facet_wrap(~Sex) +
+  scale_color_manual(values = colores_sexo) +
+  labs(
+    title = "Relacion entre edad y rendimiento",
+    subtitle = "El puntaje DOTS tiende a subir en edades tempranas y luego estabilizarse o disminuir.",
+    x = "Edad",
+    y = "Puntaje DOTS",
+    color = "Sexo"
+  ) +
+  tema_informe
+```
+
+La relacion entre edad y DOTS no parece completamente lineal. El
+rendimiento aumenta en las primeras etapas, alcanza niveles altos en
+adultos jovenes y luego muestra una tendencia a disminuir en edades
+mayore
+
+## Relacion entre peso corporal y DOTS
+
+```{r dispersion-peso, fig.cap="Relacion entre peso corporal y puntaje DOTS segun sexo", fig.height=4.2}
+ggplot(df_trabajo, aes(x = BodyweightKg, y = Dots, color = Sex)) +
+  geom_point(alpha = 0.16, size = 1.0) +
+  geom_smooth(method = "loess", se = FALSE, linewidth = 1) +
+  facet_wrap(~Sex, scales = "free_x") +
+  scale_color_manual(values = colores_sexo) +
+  labs(
+    title = "Relacion entre peso corporal y rendimiento",
+    x = "Peso corporal (kg)",
+    y = "Puntaje DOTS",
+    color = "Sexo"
+  ) +
+  tema_informe
+```
+
+FALTA
+
+## DOTS por sexo y clase de edad
+
+```{r dots-edad-sexo, fig.cap="Puntaje DOTS por sexo y clase de edad", fig.height=5.2}
+df_trabajo %>%
+  filter(Sex %in% c("F", "M"), !is.na(AgeClass)) %>%
+  ggplot(aes(x = Sex, y = Dots, fill = Sex)) +
+  geom_boxplot(alpha = 0.75, outlier.alpha = 0.22, width = 0.55) +
+  facet_wrap(~AgeClass, scales = "free_y", ncol = 4) +
+  scale_fill_manual(values = colores_sexo) +
+  labs(
+    title = "Puntaje DOTS por sexo y categoria de edad",
+    x = "Sexo",
+    y = "Puntaje DOTS",
+    fill = "Sexo"
+  ) +
+  tema_informe +
+  theme(legend.position = "bottom")
+```
+
+FALTA
+
+## DOTS promedio por rangos de edad y peso
+
+```{r heatmap-dots, fig.cap="DOTS promedio por rangos de edad y peso corporal", fig.height=4.6}
+df_trabajo %>%
+  mutate(
+    RangoEdad = cut(Age, breaks = seq(10, 80, by = 10), include.lowest = TRUE),
+    RangoPeso = cut(BodyweightKg, breaks = seq(30, 210, by = 10), include.lowest = TRUE)
+  ) %>%
+  group_by(RangoEdad, RangoPeso) %>%
+  summarise(
+    DotsPromedio = mean(Dots, na.rm = TRUE),
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  filter(n >= 5) %>%
+  ggplot(aes(x = RangoEdad, y = RangoPeso, fill = DotsPromedio)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "#F7FBFF", high = "#2B6CB0") +
+  labs(
+    title = "DOTS promedio por rangos de edad y peso",
+    subtitle = "Se muestran combinaciones con al menos 5 registros.",
+    x = "Rango de edad",
+    y = "Rango de peso corporal (kg)",
+    fill = "DOTS promedio"
+  ) +
+  tema_informe +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+FALTA
+
+## Correlacion entre variables numericas
+
+```{r matriz-correlacion, fig.cap="Matriz de correlacion entre variables numericas principales", fig.height=5}
+vars_corr <- c(
+  "BodyweightKg", "Age", "Best3SquatKg", "Best3BenchKg",
+  "Best3DeadliftKg", "TotalKg", "Dots", "Wilks"
+)
+
+nombres_corr <- c(
+  BodyweightKg = "Peso corporal",
+  Age = "Edad",
+  Best3SquatKg = "Sentadilla",
+  Best3BenchKg = "Banca",
+  Best3DeadliftKg = "Peso muerto",
+  TotalKg = "Total",
+  Dots = "DOTS",
+  Wilks = "Wilks"
+)
+
+corr_df <- df_trabajo %>%
+  select(all_of(vars_corr)) %>%
+  drop_na()
+
+matriz_corr <- cor(corr_df)
+colnames(matriz_corr) <- nombres_corr[colnames(matriz_corr)]
+rownames(matriz_corr) <- nombres_corr[rownames(matriz_corr)]
+
+as.data.frame(as.table(matriz_corr)) %>%
+  as_tibble() %>%
+  rename(Variable1 = Var1, Variable2 = Var2, Correlacion = Freq) %>%
+  ggplot(aes(x = Variable1, y = Variable2, fill = Correlacion)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(Correlacion, 2)), size = 3) +
+  scale_fill_gradient2(
+    limits = c(-1, 1),
+    low = "#B2182B",
+    mid = "white",
+    high = "#2166AC"
+  ) +
+  labs(
+    title = "Correlacion entre variables principales",
+    x = NULL,
+    y = NULL,
+    fill = "Correlacion"
+  ) +
+  tema_informe +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+FALTA
+
+## Evolucion de competidores en el tiempo
+
+```{r evolucion-temporal, fig.cap="Evolucion de participantes por año segun tipo de equipamiento", fig.height=4.2}
+df_trabajo %>%
+  count(Year, TipoEquipo) %>%
+  filter(!is.na(TipoEquipo)) %>%
+  ggplot(aes(x = Year, y = n, color = TipoEquipo)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.8) +
+  scale_color_manual(values = colores_tipo) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Evolucion de competidores por tipo de equipo",
+    subtitle = "La caida del ultimo año debe interpretarse con cuidado, porque puede ser un año incompleto.",
+    x = "Año",
+    y = "Numero de registros",
+    color = "Tipo de equipo"
+  ) +
+  tema_informe
+```
+
+FALTA
+
+# Preguntas de investigación
+
+Las siguientes preguntas surgen del interés del equipo por comprender
+distintas dimensiones del rendimiento en powerlifting competitivo,
+considerando tanto factores físicos como el rol del equipamiento y la
+evolución del deporte en el tiempo.
+
+**Pregunta 1:** ¿Existe una diferencia significativa en la media de los
+kilogramos levantados en peso muerto entre atletas *Raw* y aquellos con
+equipamiento dentro de una misma clase de peso?
+
+> *Motivación:* ...
+
+**Pregunta 2:** ¿Cómo ha evolucionado la cantidad total de competidores
+a lo largo del tiempo dependiendo de si utilizan o no equipamiento de
+soporte?
+
+> *Motivación:* ...
+
+**Pregunta 3:** ¿Hay diferencias significativas en el rendimiento
+(puntaje DOTS) entre hombres y mujeres en USA, controlando por edad y
+peso corporal?
+
+> *Motivación:* ...
+
+**Pregunta 4:** ¿Cuáles características del atleta actúan como factores
+predictivos para alcanzar el nivel de élite en USA?
+
+> *Motivación:* ...
+
+**Pregunta 5:** ¿Cuál es la relación entre la edad, el peso corporal y
+el puntaje DOTS en atletas de powerlifting en USA?
+
+> *Motivación:* ...
+
+# Discusión preliminar
+
+A partir del análisis descriptivo realizado, es posible identificar
+algunas tendencias generales que orientan las preguntas de investigación
+planteadas. *(Completar con observaciones relevantes surgidas de los
+gráficos y tablas anteriores.)*
+
+# Referencias
+
+-   OpenPowerlifting. (s.f.). *Open Powerlifting Database*. Recuperado
+    de <https://www.openpowerlifting.org>

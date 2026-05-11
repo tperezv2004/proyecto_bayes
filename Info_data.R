@@ -23,4 +23,3 @@ summary(df_trabajo)
 
 
 
-
