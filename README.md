@@ -2,7 +2,8 @@
 
 ## IMPORTANTE
 
-- gitignore ingora la base de datos completa pq son muchos datos, y tienen nombre de "completos" 
+- gitignore ingora la base de datos completa pq son muchos datos, y tienen nombre de "completos"
+- gitignore tambien ignora reporte_USA, que seria la base de datos donde vamos a trabajar
 
 - ya esta casi listo todo
 
