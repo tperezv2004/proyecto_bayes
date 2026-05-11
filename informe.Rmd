@@ -10,7 +10,6 @@ output:
 lang: es
 header-includes:
   - \usepackage{float}
-  - \usepackage{placeins}
 editor_options: 
   markdown: 
     wrap: 72
