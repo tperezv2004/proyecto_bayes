@@ -1,1 +1,7 @@
 Data/completos.csvData/reporte_USA.csv
+
+Data/reporte_USA.csv
+Data/completos.csv
+Data/*.csv
+.RData
+
