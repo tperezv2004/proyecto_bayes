@@ -25,3 +25,20 @@ No se eliminaron observaciones por valores faltantes en tondaas las columnas, ya
 ## LO QUE YO HARIA AHORA
 
 por esto seleccionamos solo 1 pais (o varios o todos) y dsp trabajamos solo con esa base de datos y asi no ponemos en el informe la limpieza de datos pq segun yo se veria muy mal, yo escogi USA
+
+
+
+
+
+
+## Preguntas a responder: 
+
+¿Existe una diferencia significativa en la media de los kilogramos levantados en peso muerto entre atletas Raw y aquellos con equipamiento dentro de una misma clase de peso?
+
+¿Cómo ha evolucionado la cantidad total de competidores a lo largo del tiempo dependiendo de si utilizan o no equipamiento de soporte en sus levantamientos?
+
+¿Hay diferencias significativas en el rendimiento (puntaje DOTS) entre hombres y mujeres atletas de powerlifting en Chile, controlando por edad y peso corporal?
+
+¿Cuáles características del atleta actúan como factores predictivos para alcanzar el nivel de élite en Chile?
+
+¿Cuál es la relación entre la edad, el peso corporal y el puntaje DOTS en atletas chilenos de powerlifting?
