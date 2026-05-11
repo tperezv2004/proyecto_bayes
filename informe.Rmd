@@ -16,7 +16,7 @@ Los datos provienen de OpenPowerlifting, una base de datos abierta que recopila 
 
 La base original utilizada contiene 3.920.662 registros y 42 variables. Para este proyecto se seleccionaron variables relacionadas con caracteristicas del atleta, tipo de competencia, levantamientos principales, puntajes de rendimiento e informacion geografica.
 
-## Limpiieza de datos
+## Limpieza de datos
 
 Para preparar la base de datos, primero se seleccionaron las variables relevantes para responder las preguntas de investigacion. Luego, se eliminaron observaciones con datos faltantes en variables centrales para el analisis: sexo, evento, equipamiento, edad, peso corporal, mejor peso muerto, total levantado, puntaje DOTS, pais del atleta y fecha de competencia.
 
@@ -26,12 +26,7 @@ No se eliminaron observaciones por valores faltantes en tondaas las columnas, ya
 
 por esto seleccionamos solo 1 pais (o varios o todos) y dsp trabajamos solo con esa base de datos y asi no ponemos en el informe la limpieza de datos pq segun yo se veria muy mal, yo escogi USA
 
-
-
-
-
-
-## Preguntas a responder: 
+## Preguntas a responder:
 
 ¿Existe una diferencia significativa en la media de los kilogramos levantados en peso muerto entre atletas Raw y aquellos con equipamiento dentro de una misma clase de peso?
 
@@ -42,3 +37,7 @@ por esto seleccionamos solo 1 pais (o varios o todos) y dsp trabajamos solo con 
 ¿Cuáles características del atleta actúan como factores predictivos para alcanzar el nivel de élite en Chile?
 
 ¿Cuál es la relación entre la edad, el peso corporal y el puntaje DOTS en atletas chilenos de powerlifting?
+
+```{r}
+set.seed(37289)
+```
