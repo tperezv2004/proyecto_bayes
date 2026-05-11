@@ -78,24 +78,7 @@ df_seleccion <- df %>%
     # Puntajes de rendimiento
     Dots,
     Wilks,
-    Goodlift,
-    
-    # Resultado competitivo
-    Place,
-    
-    # Información geográfica del atleta
-    Country,
-    State,
-    
-    # Información de la competencia
-    Federation,
-    ParentFederation,
-    Date,
-    MeetCountry,
-    MeetState,
-    # MeetTown, # Nota: Esta columna no aparece en el README proporcionado, verifica si existe en tu DF
-    MeetName,
-    Sanctioned
+    Goodlift
   )
 
 dim(df_seleccion)
@@ -122,6 +105,7 @@ df_limpio <- df_seleccion %>%
     Dots,
     Country,
     Date
+    # Agregar otras columnas que puedan dar problema
   )
 
 dim(df_seleccion)
@@ -160,7 +144,8 @@ df_limpio %>%
 
 
 pais_trabajo <- "USA"
-
+nombre_archivo <- paste0("reporte_", pais_trabajo, ".csv")
+write.csv(df_trabajo, nombre_archivo, row.names = FALSE)
 
 df_trabajo <- df_limpio %>%
   filter(Country == pais_trabajo)
@@ -179,78 +164,4 @@ df_trabajo %>%
 
 df_trabajo %>%
   count(WeightClassKg, sort = TRUE)
-
-
-
-# --------------------------------------------------------
-# --------------------------------------------------------
-# 8. GRAFICOS
-# --------------------------------------------------------
-# --------------------------------------------------------
-
-
-# Grafico 1: Distribucion del puntaje DOTS
-
-hist(
-  df_trabajo$Dots,
-  breaks = 30,
-  main = paste("Distribucion del puntaje DOTS en atletas de", pais_trabajo),
-  xlab = "Puntaje DOTS",
-  ylab = "Frecuencia"
-)
-
-
-# Grafico 2: Puntaje DOTS segun sexo
-
-boxplot(
-  Dots ~ Sex,
-  data = df_trabajo,
-  main = paste("Puntaje DOTS segun sexo en USA"),
-  xlab = "Sexo",
-  ylab = "Puntaje DOTS"
-)
-
-
-# Grafico 3: Puntaje DOTS segun equipamiento
-
-boxplot(
-  Dots ~ Equipment,
-  data = df_trabajo,
-  main = paste("Puntaje DOTS segun equipamiento en USA"),
-  xlab = "Equipamiento",
-  ylab = "Puntaje DOTS"
-)
-
-
-# Grafico 4: Relacion entre peso corporal y DOTS
-
-plot(
-  df_trabajo$BodyweightKg,
-  df_trabajo$Dots,
-  main = paste("Relacion entre peso corporal y DOTS en", pais_trabajo),
-  xlab = "Peso corporal (kg)",
-  ylab = "Puntaje DOTS"
-)
-
-
-# Grafico 5: Relacion entre edad y DOTS
-
-plot(
-  df_trabajo$Age,
-  df_trabajo$Dots,
-  main = paste("Relacion entre edad y DOTS en", pais_trabajo),
-  xlab = "Edad",
-  ylab = "Puntaje DOTS"
-)
-
-
-# Grafico 6: Peso muerto segun equipamiento
-
-boxplot(
-  Best3DeadliftKg ~ Equipment,
-  data = df_trabajo,
-  main = paste("Peso muerto segun equipamiento en", pais_trabajo),
-  xlab = "Equipamiento",
-  ylab = "Mejor peso muerto registrado (kg)"
-)
 
