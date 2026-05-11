@@ -8,7 +8,7 @@
 - ya esta casi listo todo
 
 
-### FALTA:
+## FALTA:
 
 1. interpretar algunos graficos y agregar mas informacion a los queue estan  poco comentados
 
