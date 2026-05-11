@@ -40,10 +40,9 @@ names(df)
 # --------------------------------------------------------
 # --------------------------------------------------------
 
-
 df_seleccion <- df %>%
   select(
-    # Identificacion
+    # Identificación
     Name,
     
     # Variables del atleta
@@ -60,7 +59,17 @@ df_seleccion <- df %>%
     Division,
     Tested,
     
-    # Levantamientos principales
+    # --- Intentos de Levantamiento ---
+    # Sentadilla (Squat)
+    Squat1Kg, Squat2Kg, Squat3Kg, Squat4Kg,
+    
+    # Press de Banca (Bench)
+    Bench1Kg, Bench2Kg, Bench3Kg, Bench4Kg,
+    
+    # Peso Muerto (Deadlift)
+    Deadlift1Kg, Deadlift2Kg, Deadlift3Kg, Deadlift4Kg,
+    
+    # --- Mejores Marcas y Totales ---
     Best3SquatKg,
     Best3BenchKg,
     Best3DeadliftKg,
@@ -74,17 +83,17 @@ df_seleccion <- df %>%
     # Resultado competitivo
     Place,
     
-    # Informacion geografica del atleta
+    # Información geográfica del atleta
     Country,
     State,
     
-    # Informacion de la competencia
+    # Información de la competencia
     Federation,
     ParentFederation,
     Date,
     MeetCountry,
     MeetState,
-    MeetTown,
+    # MeetTown, # Nota: Esta columna no aparece en el README proporcionado, verifica si existe en tu DF
     MeetName,
     Sanctioned
   )
@@ -151,7 +160,7 @@ df_limpio %>%
 
 
 pais_trabajo <- "USA"
-# pais_trabajo <- "Chile"
+
 
 df_trabajo <- df_limpio %>%
   filter(Country == pais_trabajo)
@@ -170,6 +179,8 @@ df_trabajo %>%
 
 df_trabajo %>%
   count(WeightClassKg, sort = TRUE)
+
+
 
 # --------------------------------------------------------
 # --------------------------------------------------------
