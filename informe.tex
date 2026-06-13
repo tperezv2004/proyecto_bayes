@@ -1,0 +1,584 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+  spanish,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\ifLuaTeX
+\usepackage[bidi=basic]{babel}
+\else
+\usepackage[bidi=default]{babel}
+\fi
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{float}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Propuesta de Proyecto: Rendimiento en Powerlifting},
+  pdfauthor={Christian Camilo, Luna Garces, Tomas Perez, Tomas Romero, Benjamin Thareau},
+  pdflang={es},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Propuesta de Proyecto: Rendimiento en Powerlifting}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Metodos Bayesianos -- Primer Semestre 2026}
+\author{Christian Camilo, Luna Garces, Tomas Perez, Tomas Romero,
+Benjamin Thareau}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduccion}\label{introduccion}
+
+El powerlifting es un deporte de fuerza en el que los atletas compiten
+principalmente en tres movimientos: sentadilla, press de banca y peso
+muerto. A partir de estos levantamientos se obtiene el total levantado,
+que corresponde a la suma del mejor intento en cada movimiento. Ademas,
+existen puntajes ajustados, como DOTS y Wilks, que permiten comparar el
+rendimiento entre atletas con distinto peso corporal.
+
+Este proyecto busca estudiar el rendimiento de atletas de powerlifting
+de Estados Unidos utilizando datos reales de OpenPowerlifting. Se busca
+analizar como variables como sexo, edad, peso corporal, categoria de
+peso y tipo de equipamiento se relacionan con el rendimiento deportivo.
+El interes principal es entender que patrones se observan en los datos
+y, posteriormente, utilizar modelos bayesianos para responder preguntas
+de investigacion.
+
+\section{Datos}\label{datos}
+
+\subsection{Procedencia}\label{procedencia}
+
+Los datos provienen de OpenPowerlifting, una base abierta que recopila
+resultados de competencias de powerlifting a nivel internacional. La
+base original contiene 3.920.662 registros y 42 variables, incluyendo
+informacion del atleta, la competencia, los intentos de levantamiento,
+los mejores levantamientos validos, puntajes ajustados y fecha del
+evento. Para este proyecto se trabajo con una version filtrada de la
+base, restringida a atletas de Estados Unidos (USA).
+
+Es importante notar que cada fila representa un registro competitivo, no
+necesariamente una persona unica. Por lo tanto, un mismo atleta puede
+aparecer mas de una vez si compitio en distintas fechas o eventos. Esta
+estructura es adecuada para analizar el rendimiento observado en
+competencias, pero debe considerarse al interpretar resultados, porque
+los registros no son completamente independientes a nivel de atleta.
+
+\subsection{Variables involucradas}\label{variables-involucradas}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1212}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.6061}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1061}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Variable
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Descripcion
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Tipo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Unidad
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Name & Nombre del atleta. Puede repetirse si el atleta compitio mas de
+una vez. & Cualitativa & No aplica \\
+Sex & Sexo registrado en la competencia: F o M. & Cualitativa & No
+aplica \\
+Age & Edad del atleta al momento de la competencia. & Cuantitativa &
+Anos \\
+AgeClass & Clase de edad usada en la competencia. & Cualitativa & Rango
+de edad \\
+BodyweightKg & Peso corporal registrado del atleta. & Cuantitativa &
+Kg \\
+WeightClassKg & Categoria de peso en la que compite el atleta. &
+Cualitativa & Kg \\
+Equipment & Tipo de equipamiento permitido: Raw, Wraps, Single-ply o
+Multi-ply. & Cualitativa & No aplica \\
+TipoEquipo & Variable creada para agrupar Raw versus Equipado. &
+Cualitativa & No aplica \\
+Best3SquatKg & Mejor intento valido de sentadilla dentro de los tres
+intentos principales. & Cuantitativa & Kg \\
+Best3BenchKg & Mejor intento valido de press de banca dentro de los tres
+intentos principales. & Cuantitativa & Kg \\
+Best3DeadliftKg & Mejor intento valido de peso muerto dentro de los tres
+intentos principales. & Cuantitativa & Kg \\
+TotalKg & Suma de los mejores levantamientos validos en sentadilla,
+banca y peso muerto. & Cuantitativa & Kg \\
+Dots & Puntaje ajustado por peso corporal usado para comparar
+rendimiento relativo. & Cuantitativa & Puntos \\
+Wilks & Otro puntaje ajustado usado historicamente en powerlifting. &
+Cuantitativa & Puntos \\
+Date & Fecha de inicio de la competencia. & Fecha & Fecha \\
+Year & Ano de la competencia, creado a partir de Date. & Cuantitativa
+discreta & Ano \\
+Elite & Variable creada para clasificar atletas con Dots \textgreater=
+400 como Elite. & Cualitativa & No aplica \\
+\end{longtable}
+
+\subsection{Preparacion y limpieza de los
+datos}\label{preparacion-y-limpieza-de-los-datos}
+
+Para construir la base final se seleccionaron variables relacionadas con
+la identificacion del atleta, caracteristicas fisicas, tipo de
+competencia, equipamiento, intentos de levantamiento, mejores marcas,
+puntajes de rendimiento y fecha. Luego se eliminaron observaciones con
+valores faltantes en las variables centrales del analisis.
+
+Ademas, se aplicaron filtros para trabajar con registros comparables:
+atletas de USA, evento SBD, sexo F o M, edades entre 15 y 70 anos, peso
+corporal entre 35 y 200 kg, levantamientos positivos, puntaje DOTS mayor
+a 10 y competencias desde el ano 2000 en adelante.
+
+\begin{longtable}[]{@{}lr@{}}
+\toprule\noalign{}
+Indicador & Valor \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Registros finales & 10,000 \\
+Variables finales & 35 \\
+Atletas distintos & 9,481 \\
+Primer ano observado & 2000 \\
+Ultimo ano observado & 2026 \\
+\end{longtable}
+
+\section{Analisis descriptivo}\label{analisis-descriptivo}
+
+\subsection{Medidas de resumen}\label{medidas-de-resumen}
+
+\begin{longtable}[]{@{}lrrrrr@{}}
+\toprule\noalign{}
+Variable & Media & Mediana & DE & Minimo & Maximo \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Edad & 28.77 & 25.00 & 11.48 & 15.00 & 70.00 \\
+Peso corporal & 85.76 & 82.20 & 21.94 & 40.64 & 190.50 \\
+Mejor sentadilla & 177.85 & 175.00 & 65.64 & 20.00 & 532.97 \\
+Mejor banca & 113.75 & 112.50 & 47.72 & 20.41 & 394.63 \\
+Mejor peso muerto & 199.19 & 200.00 & 60.37 & 25.00 & 465.00 \\
+Total levantado & 490.79 & 490.00 & 167.39 & 75.00 & 1206.56 \\
+DOTS & 358.99 & 357.53 & 74.94 & 43.07 & 742.81 \\
+Wilks & 356.76 & 355.18 & 74.99 & 43.12 & 734.34 \\
+\end{longtable}
+
+La tabla muestra que la base contiene atletas con distintos niveles de
+rendimiento, edades y pesos corporales. Esto es importante para el
+proyecto, porque permite comparar grupos y estudiar como cambia el
+rendimiento segun las caracteristicas fisicas y competitivas.
+
+\subsection{Distribucion de variables
+principales}\label{distribucion-de-variables-principales}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/histogramas-1} 
+
+}
+
+\caption{Distribucion de edad, peso corporal y puntaje DOTS}\label{fig:histogramas}
+\end{figure}
+
+La mayor parte de los registros corresponde a atletas adultos jovenes
+(aproximadamente entre 20 y 40 anos). El peso corporal se concentra en
+rangos intermedios y el puntaje DOTS muestra una distribucion unimodal,
+con mayor densidad en valores medios y una cola derecha asociada a
+atletas de rendimiento excepcional. Esto sugiere que la muestra contiene
+una mayoria de competidores recreativos o intermedios, junto con un
+grupo mas pequeno de atletas de alto nivel.
+
+\subsection{Rendimiento segun sexo}\label{rendimiento-segun-sexo}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/boxplot-sexo-1} 
+
+}
+
+\caption{Distribucion del puntaje DOTS segun sexo}\label{fig:boxplot-sexo}
+\end{figure}
+
+En la muestra, los hombres presentan una mediana de DOTS algo mayor que
+las mujeres, el rendimiento tambien puede depender de la edad, el peso
+corporal, la categoria de peso y el tipo de equipamiento.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/densidad-sexo-1} 
+
+}
+
+\caption{Densidad del puntaje DOTS segun sexo}\label{fig:densidad-sexo}
+\end{figure}
+
+El grafico de densidad confirma que las distribuciones no son identicas.
+La curva de hombres aparece desplazada hacia valores mas altos, aunque
+existe un solapamiento importante entre ambos grupos.
+
+\subsection{Rendimiento segun tipo de
+equipamiento}\label{rendimiento-segun-tipo-de-equipamiento}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/boxplot-equip-1} 
+
+}
+
+\caption{Puntaje DOTS segun tipo de equipamiento}\label{fig:boxplot-equip}
+\end{figure}
+
+El puntaje DOTS cambia segun el tipo de equipamiento. Las categorias
+equipadas, especialmente \emph{Single-ply} y \emph{Multi-ply}, tienden a
+presentar mayor dispersion y valores altos.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/boxplot-deadlift-1} 
+
+}
+
+\caption{Peso muerto en clase 90 kg segun equipamiento}\label{fig:boxplot-deadlift}
+\end{figure}
+
+Al fijar la clase de peso en 90 kg se reduce parte de la variabilidad
+asociada al peso corporal. Las diferencias entre equipamientos permiten
+observar de forma mas directa si el uso de soporte se asocia con mejores
+marcas de peso muerto.
+
+\subsection{Relacion entre Wilks y total
+levantado}\label{relacion-entre-wilks-y-total-levantado}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/wilks-total-1} 
+
+}
+
+\caption{Relacion entre puntaje Wilks y total levantado segun sexo}\label{fig:wilks-total}
+\end{figure}
+
+Existe una relacion positiva clara entre Wilks y el total levantado.
+Esto es esperable, porque Wilks resume parte del rendimiento ajustando
+por peso corporal. Ademas, se observa separacion entre hombres y mujeres
+en el total absoluto levantado.
+
+\subsection{Promedio de levantamientos segun
+edad}\label{promedio-de-levantamientos-segun-edad}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/levantamientos-edad-1} 
+
+}
+
+\caption{Promedio de sentadilla, banca y peso muerto segun clase de edad}\label{fig:levantamientos-edad}
+\end{figure}
+
+El promedio levantado aumenta desde las edades mas jovenes hasta los 30
+y luego tiende a disminuir en edades mayores. El peso muerto y la
+sentadilla suelen presentar promedios mas altos que la banca. Esto
+sugiere que la edad no tiene un efecto lineal simple sobre el
+rendimiento.
+
+\subsection{Relacion entre edad y
+DOTS}\label{relacion-entre-edad-y-dots}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/dispersion-dots-1} 
+
+}
+
+\caption{Relacion entre edad y puntaje DOTS segun sexo}\label{fig:dispersion-dots}
+\end{figure}
+
+La relacion entre edad y DOTS no parece completamente lineal. El
+rendimiento aumenta en las primeras etapas, alcanza niveles altos en
+adultos jovenes y luego muestra una tendencia a disminuir en edades
+mayores.
+
+\subsection{Relacion entre peso corporal y
+DOTS}\label{relacion-entre-peso-corporal-y-dots}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/dispersion-peso-1} 
+
+}
+
+\caption{Relacion entre peso corporal y puntaje DOTS segun sexo}\label{fig:dispersion-peso}
+\end{figure}
+
+Como DOTS ya ajusta por peso corporal, no se espera una relacion lineal
+fuerte como ocurriria con el total absoluto levantado. El suavizamiento
+sugiere que el rendimiento relativo puede variar entre rangos de peso,
+con zonas donde el puntaje promedio se estabiliza y otras donde
+disminuye. Esto motiva modelar la relacion de forma flexible en vez de
+imponer una tendencia lineal simple.
+
+REVISAR RESPUESTA
+
+\subsection{DOTS por sexo y clase de
+edad}\label{dots-por-sexo-y-clase-de-edad}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/dots-edad-sexo-1} 
+
+}
+
+\caption{Puntaje DOTS por sexo y clase de edad}\label{fig:dots-edad-sexo}
+\end{figure}
+
+El grafico por clase de edad muestra que las diferencias entre sexos se
+mantienen en varias categorias etarias, aunque la magnitud de la
+diferencia cambia segun el grupo. Tambien se aprecia que algunas clases
+de edad presentan mayor variabilidad, posiblemente por diferencias en
+tamano muestral o por la mezcla de atletas con trayectorias deportivas
+distintas.
+
+\subsection{DOTS promedio por rangos de edad y
+peso}\label{dots-promedio-por-rangos-de-edad-y-peso}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/heatmap-dots-1} 
+
+}
+
+\caption{DOTS promedio por rangos de edad y peso corporal}\label{fig:heatmap-dots}
+\end{figure}
+
+El mapa de calor resume el rendimiento relativo promedio (medido en
+DOTS) según rangos de edad y peso corporal. Aunque la métrica DOTS está
+diseñada en teoría para equilibrar la ventaja del peso, el gráfico
+revela que los puntajes más altos no se distribuyen uniformemente,
+concentrándose fuertemente en el rango de 20 a 40 años y las categorías
+más pesadas (sobre los 120 kg). El gráfico muestra la interacción entre
+ambas variables: el declive del rendimiento asociado al envejecimiento
+no ocurre con la misma intensidad ni al mismo ritmo en todas las
+categorías de peso. Las celdas con menos registros fueron excluidas para
+garantizar que estas tendencias representen comportamientos
+poblacionales estables.
+
+\subsection{Correlacion entre variables
+numericas}\label{correlacion-entre-variables-numericas}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/matriz-correlacion-1} 
+
+}
+
+\caption{Matriz de correlacion entre variables numericas principales}\label{fig:matriz-correlacion}
+\end{figure}
+
+La matriz muestra correlaciones altas entre los tres levantamientos y el
+total, lo que es esperable porque el total se construye directamente a
+partir de ellos. DOTS y Wilks tambien presentan una correlacion muy
+alta, ya que ambos son puntajes ajustados por peso corporal y buscan
+medir rendimiento relativo. En cambio, la edad suele tener asociaciones
+mas debiles con las variables de fuerza, lo que sugiere que su efecto
+puede depender de otros factores.
+
+\subsection{Evolucion de competidores en el
+tiempo}\label{evolucion-de-competidores-en-el-tiempo}
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.92\linewidth]{informe_files/figure-latex/evolucion-temporal-1} 
+
+}
+
+\caption{Evolucion de participantes por año segun tipo de equipamiento}\label{fig:evolucion-temporal}
+\end{figure}
+
+La evolucion temporal muestra cambios importantes en la participacion y
+en la composicion por tipo de equipamiento. En particular, los registros
+\emph{Raw} tienden a ganar protagonismo en los años recientes, mientras
+que las categorias equipadas quedan relativamente más concentradas en
+periodos o grupos especificos.
+
+\section{Preguntas de investigacion}\label{preguntas-de-investigacion}
+
+Las siguientes preguntas surgen del interes del equipo por comprender
+distintas dimensiones del rendimiento en powerlifting competitivo,
+considerando tanto factores fisicos como el rol del equipamiento y la
+evolucion del deporte en el tiempo.
+
+\textbf{Pregunta 1:} Existe una diferencia significativa en la media de
+los kilogramos levantados en peso muerto entre atletas \emph{Raw} y
+aquellos con equipamiento dentro de una misma clase de peso?
+
+\begin{quote}
+\emph{Motivacion:} Esta pregunta permite aislar parcialmente el efecto
+del equipamiento al comparar atletas dentro de una misma categoria de
+peso. El interes bayesiano seria estimar la diferencia de medias entre
+grupos y cuantificar la incertidumbre asociada a esa diferencia.
+\end{quote}
+
+\textbf{Pregunta 2:} Como ha evolucionado la cantidad total de
+competidores a lo largo del tiempo dependiendo de si utilizan o no
+equipamiento de soporte?
+
+\begin{quote}
+\emph{Motivacion:} La popularidad relativa de las categorias \emph{Raw}
+y equipadas puede haber cambiado en el tiempo. Modelar esta evolucion
+permite estudiar tendencias temporales y comparar tasas de crecimiento
+entre tipos de competencia.
+\end{quote}
+
+\textbf{Pregunta 3:} Hay diferencias significativas en el rendimiento
+(puntaje DOTS) entre hombres y mujeres en USA, controlando por edad y
+peso corporal?
+
+\begin{quote}
+\emph{Motivacion:} La comparacion directa por sexo puede estar
+confundida por diferencias de edad, peso corporal y composicion de la
+muestra. Un modelo con estas variables fijas permitiria evaluar
+diferencias en rendimiento.
+\end{quote}
+
+\textbf{Pregunta 4:} Cuales caracteristicas del atleta actuan como
+factores predictivos para alcanzar el nivel de elite en USA?
+
+\begin{quote}
+\emph{Motivacion:} Clasificar atletas como elite o no elite permite
+formular un problema predictivo. Variables como edad, sexo, peso
+corporal, equipamiento y levantamientos pueden aportar informacion sobre
+la probabilidad de alcanzar un nivel alto de rendimiento.
+\end{quote}
+
+\textbf{Pregunta 5:} Cual es la relacion entre la edad, el peso corporal
+y el puntaje DOTS en atletas de powerlifting en USA?
+
+\begin{quote}
+\emph{Motivacion:} Los gráficos descriptivos muestran que la relación
+entre edad y rendimiento no es lineal: el puntaje DOTS aumenta en
+atletas jóvenes y tiende a disminuir en edades mayores. Se utilizara un
+enfoque bayesiano, el cual permite incorporar incertidumbre en la
+estimación de los coeficientes y es especialmente útil en zonas con
+menos datos, como las edades extremas.
+\end{quote}
+
+\section{Discusión preliminar}\label{discusiuxf3n-preliminar}
+
+A partir del analisis descriptivo realizado, es posible identificar
+algunas tendencias generales que orientan las preguntas de investigacion
+planteadas. Primero, el rendimiento medido mediante DOTS presenta
+diferencias entre sexos. Para una comparación justa, se deben incorporar
+diferentes parámetros de efecto para cada sexo, controlando además por
+edad y peso corporal, en lugar de basarse únicamente en diferencias
+visuales de mediana.
+
+Segundo, el equipamiento parece estar relacionado con cambios en el
+rendimiento y con patrones distintos de participacion. Las categorias
+equipadas muestran mayor dispersion en algunos graficos, mientras que
+los registros \emph{Raw} parecen tener una presencia creciente en el
+tiempo. Estas observaciones justifican preguntas especificas sobre el
+efecto del equipamiento y sobre la evolucion temporal de las categorias.
+
+Tercero, la edad y el peso corporal no se relacionan con el rendimiento
+de forma puramente lineal. El rendimiento promedio tiende a aumentar
+desde edades tempranas, estabilizarse en adultos jovenes y disminuir en
+edades mayores. Ademas, el mapa de calor sugiere que ciertas
+combinaciones de edad y peso concentran mejores puntajes promedio. Por
+lo tanto, los modelos posteriores deberian considerar posibles efectos
+no lineales e interacciones.
+
+Finalmente, el analisis confirma que DOTS y Wilks capturan informacion
+similar sobre rendimiento relativo, mientras que el total levantado y
+los tres levantamientos principales estan fuertemente relacionados entre
+si. Esto ayuda a decidir que variables usar como respuesta y cuales
+utilizar como predictores, evitando redundancias innecesarias en los
+modelos bayesianos.
+
+\section{Referencias}\label{referencias}
+
+\begin{itemize}
+\tightlist
+\item
+  OpenPowerlifting. (s.f.). \emph{Open Powerlifting Database}.
+  Recuperado de \url{https://www.openpowerlifting.org}
+\end{itemize}
+
+\end{document}
